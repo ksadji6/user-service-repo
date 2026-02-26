@@ -73,7 +73,7 @@ public class UserService {
                 .passNumber(passNumber)
                 .build();
 
-        try {
+        /*try {
             // Conversion manuelle de l'objet 'event' en chaîne JSON
             String jsonEvent = objectMapper.writeValueAsString(event);
 
@@ -85,7 +85,7 @@ public class UserService {
             // Si la conversion échoue, on log l'erreur sans bloquer l'inscription en base
             log.error("Erreur conversion JSON Inscription : {}", e.getMessage());
         }
-
+*/
         return toUserResponse(user);
     }
 
@@ -149,4 +149,13 @@ public class UserService {
                 .valid(pass.isValid())
                 .build();
     }
+    @Transactional
+    public void incrementTripCount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        user.setTotalTrips(user.getTotalTrips() + 1);
+        userRepository.save(user);
+        log.info("Compteur de trajets incrémenté pour l'utilisateur {}", userId);
+    }
+
 }

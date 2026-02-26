@@ -47,4 +47,11 @@ public class UserController {
     public ResponseEntity<PassResponse> reactivatePass(@PathVariable String passNumber) {
         return ResponseEntity.ok(userService.reactivatePass(passNumber));
     }
+
+    @PutMapping("/{id}/increment-trips")
+    @Operation(summary = "Incrémenter le compteur de trajets d'un utilisateur")
+    public ResponseEntity<Void> incrementTrips(@PathVariable Long id) {
+        userService.incrementTripCount(id);
+        return ResponseEntity.ok().build();
+    }
 }
