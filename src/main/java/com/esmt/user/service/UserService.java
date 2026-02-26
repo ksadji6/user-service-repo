@@ -4,6 +4,7 @@ import com.esmt.user.dto.*;
 import com.esmt.user.entity.*;
 import com.esmt.user.event.UserRegisteredEvent;
 import com.esmt.user.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -23,6 +24,7 @@ public class UserService {
     private final MobilityPassRepository passRepository;
     private final PasswordEncoder passwordEncoder;
     private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.rabbitmq.exchange:smart-mobility.exchange}")
     private String exchange;
@@ -71,8 +73,18 @@ public class UserService {
                 .passNumber(passNumber)
                 .build();
 
-        rabbitTemplate.convertAndSend(exchange, userRegisteredKey, event);
-        log.info("Inscription réussie - User ID: {} - Pass: {}", user.getId(), passNumber);
+        try {
+            // Conversion manuelle de l'objet 'event' en chaîne JSON
+            String jsonEvent = objectMapper.writeValueAsString(event);
+
+            // Envoi de la chaîne JSON au lieu de l'objet brut
+            rabbitTemplate.convertAndSend(exchange, userRegisteredKey, jsonEvent);
+
+            log.info("Inscription réussie et événement envoyé pour : {}", user.getEmail());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            // Si la conversion échoue, on log l'erreur sans bloquer l'inscription en base
+            log.error("Erreur conversion JSON Inscription : {}", e.getMessage());
+        }
 
         return toUserResponse(user);
     }
